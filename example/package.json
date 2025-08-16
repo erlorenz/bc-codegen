@@ -1,0 +1,20 @@
+{
+  "name": "bc-codegen",
+  "version": "1.0.0",
+  "description": "A CLI tool that parses Microsoft Business Central OData API metadata and generates typed schemas for various languages.",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test schema.test.ts"
+  },
+  "dependencies": {
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@biomejs/biome": "^2.2.0",
+    "typescript": "^5.9.2"
+  }
+}
