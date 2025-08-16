@@ -68,6 +68,9 @@ func (g *TypeScriptGenerator) Generate(model metadata.Model) error {
 		g.writeUpdateType(entityType)
 	}
 
+	// Generate bound actions
+	g.writeBoundActions(model, entitiesToGenerate)
+
 	// Write the content to file
 	return g.writeToFile()
 }
@@ -78,7 +81,7 @@ func (g *TypeScriptGenerator) writeToFile() error {
 		return err
 	}
 	defer file.Close()
-	
+
 	_, err = file.WriteString(g.builder.String())
 	return err
 }
@@ -330,4 +333,98 @@ func toCamelCase(s string) string {
 		return s
 	}
 	return strings.ToLower(s[:1]) + s[1:]
+}
+
+func (g *TypeScriptGenerator) writeBoundActions(model metadata.Model, entitiesToGenerate []metadata.EntityType) {
+	// Group actions by entity type they're bound to
+	boundActions := make(map[string][]metadata.Action)
+	
+	// Create a set of entity names we're generating for quick lookup
+	entityNames := make(map[string]bool)
+	for _, entity := range entitiesToGenerate {
+		entityNames[entity.Name] = true
+	}
+	
+	// Group bound actions by the entity they're bound to
+	for _, action := range model.DataServices.Schema.Actions {
+		if action.IsBound == "true" && len(action.Parameters) > 0 {
+			// Extract the binding parameter type
+			bindingParam := action.Parameters[0] // First parameter is always the binding parameter
+			entityType := g.extractEntityTypeName(bindingParam.Type)
+			
+			// Only include actions for entities we're generating
+			if entityNames[entityType] {
+				boundActions[entityType] = append(boundActions[entityType], action)
+			}
+		}
+	}
+	
+	if len(boundActions) == 0 {
+		return // No bound actions to generate
+	}
+	
+	// Generate action definitions
+	g.builder.WriteString("// Bound Actions\n")
+	g.builder.WriteString("export const BoundActions = {\n")
+	
+	entityIndex := 0
+	totalEntities := len(boundActions)
+	
+	for entityType, actions := range boundActions {
+		entityIndex++
+		isLastEntity := entityIndex == totalEntities
+		
+		g.builder.WriteString(fmt.Sprintf("  %s: {\n", toPascalCase(entityType)))
+		
+		for i, action := range actions {
+			isLastAction := i == len(actions)-1
+			g.writeActionDefinition(action, isLastAction)
+		}
+		
+		if isLastEntity {
+			g.builder.WriteString("  }\n")
+		} else {
+			g.builder.WriteString("  },\n")
+		}
+	}
+	
+	g.builder.WriteString("} as const;\n")
+	g.builder.WriteString("\n")
+	
+	// Generate types
+	g.builder.WriteString("export type BoundActionsType = typeof BoundActions;\n")
+	g.builder.WriteString("\n")
+}
+
+func (g *TypeScriptGenerator) writeActionDefinition(action metadata.Action, isLast bool) {
+	g.builder.WriteString(fmt.Sprintf("    %s: {\n", toCamelCase(action.Name)))
+	g.builder.WriteString(fmt.Sprintf("      name: \"%s\",\n", action.Name))
+	
+	// Write parameters (excluding binding parameter)
+	g.builder.WriteString("      parameters: [\n")
+	for i, param := range action.Parameters {
+		if param.Name == "bindingParameter" {
+			continue // Skip binding parameter
+		}
+		
+		isRequired := param.Nullable != "true"
+		g.builder.WriteString(fmt.Sprintf("        {\n"))
+		g.builder.WriteString(fmt.Sprintf("          name: \"%s\",\n", param.Name))
+		g.builder.WriteString(fmt.Sprintf("          type: \"%s\",\n", g.mapODataTypeToTypeScript(param.Type)))
+		g.builder.WriteString(fmt.Sprintf("          required: %t\n", isRequired))
+		
+		isLastParam := i == len(action.Parameters)-1
+		if isLastParam {
+			g.builder.WriteString("        }\n")
+		} else {
+			g.builder.WriteString("        },\n")
+		}
+	}
+	g.builder.WriteString("      ]\n")
+	
+	if isLast {
+		g.builder.WriteString("    }\n")
+	} else {
+		g.builder.WriteString("    },\n")
+	}
 }

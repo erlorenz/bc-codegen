@@ -20,6 +20,7 @@ type Schema struct {
 	EntityTypes     []EntityType    `xml:"EntityType"`
 	ComplexTypes    []ComplexType   `xml:"ComplexType"`
 	EnumTypes       []EnumType      `xml:"EnumType"`
+	Actions         []Action        `xml:"Action"`
 	EntityContainer EntityContainer `xml:"EntityContainer"`
 }
 
@@ -96,4 +97,25 @@ func Parse(path string) (*Model, error) {
 	}
 
 	return &edmx, nil
+}
+
+// Action represents an OData Action (bound operations/procedures)
+type Action struct {
+	Name       string      `xml:"Name,attr"`
+	IsBound    string      `xml:"IsBound,attr"`
+	Parameters []Parameter `xml:"Parameter"`
+	ReturnType *ReturnType `xml:"ReturnType,omitempty"`
+}
+
+// Parameter represents an action parameter
+type Parameter struct {
+	Name     string `xml:"Name,attr"`
+	Type     string `xml:"Type,attr"`
+	Nullable string `xml:"Nullable,attr"`
+}
+
+// ReturnType represents an action return type
+type ReturnType struct {
+	Type     string `xml:"Type,attr"`
+	Nullable string `xml:"Nullable,attr"`
 }
