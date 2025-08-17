@@ -48,6 +48,7 @@ build/
 example/bin/
 example/node_modules/
 example/generated/
+example/data/
 
 # Log files
 *.log

@@ -6,8 +6,9 @@ description = "Build the bc-codegen binary"
 run = "go build -o ./example/bin/bc-codegen ."
 
 [tasks.genschemas]
+depends = ["clean","build"]
 description = "Generate TypeScript schemas from Business Central metadata (excludes Company, includes all referenced types)"
-run = "./example/bin/bc-codegen -outdir example/generated -name v2 example/metadata.xml"
+run = "./example/bin/bc-codegen -outdir example/generated -name v2 example/data/metadata.xml"
 
 [tasks.clean]
 description = "Clean generated files and build artifacts"
@@ -16,6 +17,11 @@ run = "rm -rf ./example/generated ./example/bin"
 [tasks.test]
 description = "Run tests and validation"
 run = "go test ./..."
+
+[tasks.test-ts]
+depends = "genschemas"
+description = "Test the Typescript schema generation"
+run = "cd example && npm test"
 
 [tasks.install]
 description = "Install bc-codegen binary to local bin"
