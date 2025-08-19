@@ -10,28 +10,21 @@ import (
 )
 
 type CLI struct {
-	InputFile string
-	OutputDir string
-	Name      string
-	Language  string
+	InputFile  string
+	OutputFile string
+	Language   string
 }
 
 func main() {
 	cli := &CLI{
-		OutputDir: "generated",
-		Name:      "schemas",
-		Language:  "typescript",
+		OutputFile: "schema.ts",
+		Language:   "typescript",
 	}
 
-	flag.StringVar(&cli.OutputDir, "outdir", "generated", "Output directory for generated files")
-	flag.StringVar(&cli.Name, "name", "schema", "Name of the output file (without extension)")
+	flag.StringVar(&cli.OutputFile, "out", "schema.ts", "Output file path")
+	flag.StringVar(&cli.OutputFile, "o", "schema.ts", "Output file path (short)")
 	flag.StringVar(&cli.Language, "lang", "typescript", "Language to generate (typescript)")
 	flag.Parse()
-
-	// Make it v2.schema.ts insted of v2.ts
-	if cli.Name != "schema" {
-		cli.Name = cli.Name + ".schema"
-	}
 	// Get metadata file from positional argument
 	args := flag.Args()
 	if len(args) != 1 {
@@ -54,14 +47,10 @@ func (c *CLI) Run() error {
 		return fmt.Errorf("failed to parse metadata: %w", err)
 	}
 
-	if err := os.MkdirAll(c.OutputDir, 0755); err != nil {
-		return err
-	}
-
 	var generator generate.Generator
 	switch c.Language {
 	case "typescript":
-		generator, err = generate.NewTypeScript(c.OutputDir, c.Name)
+		generator, err = generate.NewTypeScript(c.OutputFile)
 		if err != nil {
 			return fmt.Errorf("failed to create TypeScript generator: %w", err)
 		}

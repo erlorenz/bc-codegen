@@ -9,8 +9,13 @@ import (
 	"github.com/erlorenz/bc-codegen/metadata"
 )
 
-func NewTypeScript(outDir, name string) (*TypeScriptGenerator, error) {
-	outputFile := filepath.Join(outDir, name+".ts")
+func NewTypeScript(outputFile string) (*TypeScriptGenerator, error) {
+	// Create directory if it doesn't exist
+	if dir := filepath.Dir(outputFile); dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, err
+		}
+	}
 
 	generator := &TypeScriptGenerator{
 		outputPath: outputFile,

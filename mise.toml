@@ -8,7 +8,7 @@ run = "go build -o ./example/bin/bc-codegen ."
 [tasks.genschemas]
 depends = ["clean","build"]
 description = "Generate TypeScript schemas from Business Central metadata (excludes Company, includes all referenced types)"
-run = "./example/bin/bc-codegen -outdir example/generated -name v2 example/data/metadata.xml"
+run = "./example/bin/bc-codegen -out example/generated/v2.schema.ts  example/data/metadata.xml"
 
 [tasks.clean]
 description = "Clean generated files and build artifacts"
