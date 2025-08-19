@@ -170,7 +170,5 @@ describe("SalesOrder Schema Tests", () => {
 		assert.equal(result.salesOrderLinesDetailed[1]?.description, "Test Product 2");
 	});
 
-    test("BoundActions.SalesOrder has actions", () => {
-        assert(V2.BoundActions.SalesOrder.shipAndInvoice, "expected a bound action")
-    })
+
 });

@@ -363,68 +363,22 @@ func (g *TypeScriptGenerator) writeBoundActions(model metadata.Model, entitiesTo
 		return // No bound actions to generate
 	}
 	
-	// Generate action definitions
-	g.builder.WriteString("// Bound Actions\n")
-	g.builder.WriteString("export const BoundActions = {\n")
-	
-	entityIndex := 0
-	totalEntities := len(boundActions)
-	
+	// Generate union types for bound actions
+	g.builder.WriteString("// Bound Action Types\n")
 	for entityType, actions := range boundActions {
-		entityIndex++
-		isLastEntity := entityIndex == totalEntities
-		
-		g.builder.WriteString(fmt.Sprintf("  %s: {\n", toPascalCase(entityType)))
-		
-		for i, action := range actions {
-			isLastAction := i == len(actions)-1
-			g.writeActionDefinition(action, isLastAction)
-		}
-		
-		if isLastEntity {
-			g.builder.WriteString("  }\n")
-		} else {
-			g.builder.WriteString("  },\n")
+		if len(actions) > 0 {
+			g.builder.WriteString(fmt.Sprintf("export type %sActions = ", toPascalCase(entityType)))
+			
+			// Create union type with action names
+			for i, action := range actions {
+				if i > 0 {
+					g.builder.WriteString(" | ")
+				}
+				g.builder.WriteString(fmt.Sprintf("'%s'", action.Name))
+			}
+			g.builder.WriteString(";\n")
 		}
 	}
-	
-	g.builder.WriteString("} as const;\n")
-	g.builder.WriteString("\n")
-	
-	// Generate types
-	g.builder.WriteString("export type BoundActionsType = typeof BoundActions;\n")
 	g.builder.WriteString("\n")
 }
 
-func (g *TypeScriptGenerator) writeActionDefinition(action metadata.Action, isLast bool) {
-	g.builder.WriteString(fmt.Sprintf("    %s: {\n", toCamelCase(action.Name)))
-	g.builder.WriteString(fmt.Sprintf("      name: \"%s\",\n", action.Name))
-	
-	// Write parameters (excluding binding parameter)
-	g.builder.WriteString("      parameters: [\n")
-	for i, param := range action.Parameters {
-		if param.Name == "bindingParameter" {
-			continue // Skip binding parameter
-		}
-		
-		isRequired := param.Nullable != "true"
-		g.builder.WriteString(fmt.Sprintf("        {\n"))
-		g.builder.WriteString(fmt.Sprintf("          name: \"%s\",\n", param.Name))
-		g.builder.WriteString(fmt.Sprintf("          type: \"%s\",\n", g.mapODataTypeToTypeScript(param.Type)))
-		g.builder.WriteString(fmt.Sprintf("          required: %t\n", isRequired))
-		
-		isLastParam := i == len(action.Parameters)-1
-		if isLastParam {
-			g.builder.WriteString("        }\n")
-		} else {
-			g.builder.WriteString("        },\n")
-		}
-	}
-	g.builder.WriteString("      ]\n")
-	
-	if isLast {
-		g.builder.WriteString("    }\n")
-	} else {
-		g.builder.WriteString("    },\n")
-	}
-}
